@@ -5,7 +5,7 @@ import SignInView from '@/views/SignInView.vue'
 import SignUpView from '@/views/SignUpView.vue'
 import DashboardView from '@/views/DashboardView.vue'
 import NotFoundView from '@/views/NotFoundView.vue'
-import WordbankView from '@/views/WordbankView.vue'
+import WordbankView from '@/views/WordBankView.vue'
 import SearchView from '@/views/SearchView.vue'
 import ReadingView from '@/views/ReadingView.vue'
 
@@ -15,10 +15,10 @@ const router = createRouter({
     { path: '/', component: HomeView },
     { path: '/sign-in', component: SignInView },
     { path: '/sign-up', component: SignUpView },
-    { path: '/dashboard', component: DashboardView, meta: { requiresAuth: true } },
-    { path: '/wordbank', component: WordbankView, meta: { requiresAuth: true } },
-    { path: '/search', component: SearchView, meta: { requiresAuth: true } },
-    { path: '/read/:id', component: ReadingView, meta: { requiresAuth: true } },
+    { path: '/dashboard', component: DashboardView, meta: { requiresAuth: false } },
+    { path: '/wordbank', component: WordbankView, meta: { requiresAuth: false } },
+    { path: '/search', component: SearchView, meta: { requiresAuth: false } },
+    { path: '/read/:id', component: ReadingView, meta: { requiresAuth: false } },
 
     // Catch-all 404
     { path: '/:pathMatch(.*)*', component: NotFoundView },

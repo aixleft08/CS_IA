@@ -1,5 +1,5 @@
 <script setup>
-import Header from '@/components/Header.vue'
+import NavBar from '@/components/NavBar.vue'
 import { useAuth } from '@/composables/useAuth'
 
 const { user } = useAuth()
@@ -7,7 +7,7 @@ const { user } = useAuth()
 
 <template>
   <div class="dash">
-    <Header />
+    <NavBar />
 
     <main class="dash-main">
       <section class="panel">

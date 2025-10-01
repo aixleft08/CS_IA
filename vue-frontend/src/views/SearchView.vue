@@ -1,5 +1,5 @@
 <script setup>
-import Header from '@/components/Header.vue'
+import NavBar from '@/components/NavBar.vue'
 import SearchBar from '@/components/SearchBar.vue'
 import ArticleCard from '@/components/ArticleCard.vue'
 import { ref } from 'vue'
@@ -19,7 +19,7 @@ function doSearch(query) {
 
 <template>
   <div class="page">
-    <Header />
+    <NavBar />
     <main class="main">
       <SearchBar @submit="doSearch" />
       <section class="list">

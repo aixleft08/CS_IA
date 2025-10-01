@@ -1,5 +1,5 @@
 <script setup>
-import Header from '@/components/Header.vue'
+import NavBar from '@/components/NavBar.vue'
 import WordTable from '@/components/WordTable.vue'
 import { reactive } from 'vue'
 
@@ -18,7 +18,7 @@ function reset() {
 
 <template>
   <div class="page">
-    <Header />
+    <NavBar />
     <main class="main">
       <WordTable :rows="rows" @reset="reset" />
     </main>

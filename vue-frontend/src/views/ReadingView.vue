@@ -1,5 +1,5 @@
 <script setup>
-import Header from '@/components/Header.vue'
+import NavBar from '@/components/NavBar.vue'
 import DictionaryCard from '@/components/DictionaryCard.vue'
 import { ref } from 'vue'
 import { useRoute } from 'vue-router'
@@ -27,7 +27,7 @@ function addToWordbank(entry) {
 
 <template>
   <div class="page">
-    <Header />
+    <NavBar />
     <main class="main">
       <section class="grid">
         <article class="reader">

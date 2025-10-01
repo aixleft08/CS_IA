@@ -1,7 +1,7 @@
 <script setup>
 import { computed } from 'vue'
 import { useAuth } from '@/composables/useAuth'
-import Header from '@/components/Header.vue'
+import NavBar from '@/components/NavBar.vue'
 
 const { isAuthenticated } = useAuth()
 const authed = computed(() => isAuthenticated.value)
@@ -9,7 +9,7 @@ const authed = computed(() => isAuthenticated.value)
 
 <template>
   <div class="home-container">
-    <Header />
+    <NavBar />
 
     <div class="home-card">
       <div class="home-header">
