@@ -13,12 +13,13 @@ const router = createRouter({
   history: createWebHistory(),
   routes: [
     { path: '/', component: HomeView },
-    { path: '/sign-in', component: SignInView },
-    { path: '/sign-up', component: SignUpView },
-    { path: '/dashboard', component: DashboardView, meta: { requiresAuth: false } },
-    { path: '/wordbank', component: WordbankView, meta: { requiresAuth: false } },
-    { path: '/search', component: SearchView, meta: { requiresAuth: false } },
-    { path: '/read/:id', component: ReadingView, meta: { requiresAuth: false } },
+    { path: '/sign-in', component: SignInView, meta: { guestOnly: true } },
+    { path: '/sign-up', component: SignUpView, meta: { guestOnly: true } },
+
+    { path: '/dashboard', component: DashboardView, meta: { requiresAuth: true } },
+    { path: '/wordbank', component: WordbankView, meta: { requiresAuth: true } },
+    { path: '/search', component: SearchView, meta: { requiresAuth: true } },
+    { path: '/read/:id', component: ReadingView, meta: { requiresAuth: true } },
 
     // Catch-all 404
     { path: '/:pathMatch(.*)*', component: NotFoundView },

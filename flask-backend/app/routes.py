@@ -16,53 +16,79 @@ def test():
 
 @auth.route('/login', methods=['POST'])
 def login():
-    data = request.json
-    user = User.query.filter_by(name=data['name']).first()
-    if user and user.verify_password(data['password']):
-        access_token = create_access_token(identity=user.id)
-        resp = jsonify({
-            'user': {
-                'id': user.id,
-                'name': user.name,
-                'quizzes_done': user.quizzes_done,
-                'goal_length_minutes': user.goal_length_minutes
-            },
-            'token': access_token
-        })
-        set_access_cookies(resp, access_token, max_age=14*24*3600)
-        return resp
-    return jsonify({'error': 'Invalid credentials'}), 401
+    data = request.json or {}
+
+    name = data.get('name')
+    password = data.get('password')
+
+    if not isinstance(name, str) or not name.strip():
+        return jsonify({'error': 'missing fields'}), 400
+    if not isinstance(password, str) or not password.strip():
+        return jsonify({'error': 'missing fields'}), 400
+
+    user = User.query.filter_by(name=name.strip()).first()
+    if not user or not user.verify_password(password):
+        return jsonify({'error': 'Invalid credentials'}), 401
+
+    access_token = create_access_token(identity=user.id)
+    resp = jsonify({
+        'user': {
+            'id': user.id,
+            'name': user.name,
+            'quizzes_done': user.quizzes_done,
+            'goal_length_minutes': user.goal_length_minutes
+        },
+        'token': access_token
+    })
+
+    set_access_cookies(resp, access_token, max_age=14*24*3600)
+    return resp, 200
 
 @auth.route('/logout', methods=['POST'])
 @jwt_required()
 def logout():
     resp = jsonify({'message': 'Logged out'})
     unset_jwt_cookies(resp)
-    return resp
+    return resp, 200
 
 @auth.route('/register', methods=['POST'])
 def register():
-    data = request.json
-    # Check if passwords match
-    if data.get('password') != data.get('confirm_password'):
-        return jsonify({'error': 'Invalid username or password'}), 409
-    
-    # Check if username exists
-    if User.query.filter_by(name=data['name']).first():
-        return jsonify({'error': 'Invalid username or password'}), 409
-    
-    user = User(name=data['name'], password=data['password'])
+    data = request.json or {}
+    name = (data.get('name') or '').strip()
+    password = data.get('password') or ''
+    confirm = data.get('confirm_password') or ''
+
+    if not isinstance(name, str) or not name.strip():
+        return jsonify({'error': 'missing fields'}), 400
+    if not isinstance(password, str) or not password.strip():
+        return jsonify({'error': 'missing fields'}), 400
+    if not isinstance(confirm, str) or not confirm.strip():
+        return jsonify({'error': 'missing fields'}), 400
+    if password != confirm:
+        return jsonify({'error': 'passwords do not match'}), 400
+
+    if User.query.filter_by(name=name).first():
+        return jsonify({'error': 'username already exists'}), 409
+
+    user = User(name=name, password=password)
     db.session.add(user)
     db.session.commit()
-    
-    return jsonify({
+
+    access_token = create_access_token(identity=user.id)
+
+    resp = jsonify({
         'user': {
             'id': user.id,
             'name': user.name,
             'quizzes_done': user.quizzes_done,
             'goal_length_minutes': user.goal_length_minutes
-        }
-    }), 201
+        },
+        'token': access_token
+    })
+
+    set_access_cookies(resp, access_token, max_age=14*24*3600)
+
+    return resp, 200
 
 @auth.route('/user', methods=['GET'])
 @jwt_required()
