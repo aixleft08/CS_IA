@@ -74,8 +74,8 @@ async function onSubmit(){
     </button>
 
     <p class="switch">
-      <span v-if="mode==='sign-in'">New to Enlingo?</span>
-      <span v-else>Already have an account?</span>
+      <span v-if="mode==='sign-in'">New to Enlingo?&nbsp;</span>
+      <span v-else>Already have an account?&nbsp;</span>
       <RouterLink :to="mode==='sign-in' ? '/sign-up' : '/sign-in'">
         {{ mode==='sign-in' ? 'Sign up' : 'Sign in' }}
       </RouterLink>
