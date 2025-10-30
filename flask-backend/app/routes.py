@@ -329,6 +329,28 @@ def get_translations():
 # ---Word Bank routes---
 word_bank = Blueprint('word_bank', __name__, url_prefix='/api')
 
+@word_bank.route('/words', methods=['GET'])
+@jwt_required()
+def list_words():
+    user_id = get_jwt_identity()
+    user = User.query.get(user_id)
+    if not user:
+        return jsonify({'error': 'Unauthorized'}), 401
+
+    # user.words comes from the many-to-many
+    words = [
+        {
+            'id': w.id,
+            'lemma': w.lemma,
+            'lemma_rank': w.lemma_rank,
+            'word_rank': w.word_rank,
+        }
+        for w in user.words
+    ]
+
+    return jsonify({'words': words}), 200
+
+
 @word_bank.route('/words', methods=['POST'])
 @jwt_required()
 def add_word():

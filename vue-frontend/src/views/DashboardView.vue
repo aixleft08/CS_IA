@@ -1,8 +1,15 @@
 <script setup>
 import NavBar from '@/components/NavBar.vue'
 import { useAuth } from '@/composables/useAuth'
+import { onMounted } from 'vue'
 
-const { user } = useAuth()
+const { user, fetchMe, isLoggedIn } = useAuth()
+
+onMounted(() => {
+  if (isLoggedIn()) {
+    fetchMe()
+  }
+})
 </script>
 
 <template>

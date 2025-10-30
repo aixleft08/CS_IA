@@ -1,18 +1,17 @@
 <script setup>
+import { onMounted } from 'vue'
 import NavBar from '@/components/NavBar.vue'
 import WordTable from '@/components/WordTable.vue'
-import { reactive } from 'vue'
+import { useWordBank } from '@/composables/useWordBank'
 
-const rows = reactive([
-  { id:1, word:'Lorem', definition:'Ipsum', translation:'文本' },
-  { id:2, word:'Lorem', definition:'Ipsum', translation:'文本' },
-  { id:3, word:'Lorem', definition:'Ipsum', translation:'文本' },
-  { id:4, word:'Lorem', definition:'Ipsum', translation:'文本' },
-  { id:5, word:'Lorem', definition:'Ipsum', translation:'文本' },
-])
+const { words, loading, error, fetchWords, clearWords } = useWordBank()
+
+onMounted(() => {
+  fetchWords()
+})
 
 function reset() {
-  rows.splice(0, rows.length) // clear
+  clearWords()
 }
 </script>
 
@@ -20,12 +19,20 @@ function reset() {
   <div class="page">
     <NavBar />
     <main class="main">
-      <WordTable :rows="rows" @reset="reset" />
+      <WordTable :rows="words" :loading="loading" :error="error" @reset="reset" />
     </main>
   </div>
 </template>
 
 <style scoped>
-.page{min-height:100vh;display:flex;flex-direction:column;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%)}
-.main{flex:1;padding:40px 20px}
+.page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+.main {
+  flex: 1;
+  padding: 40px 20px;
+}
 </style>

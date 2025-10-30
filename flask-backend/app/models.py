@@ -26,7 +26,7 @@ text_tag_association = db.Table(
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(64), nullable=False)
+    name = db.Column(db.String(64), unique=True, nullable=False)
     password_hash = db.Column(db.String(128), nullable=False)
     quizzes_done = db.Column(db.Integer, default=0)
     goal_length_minutes = db.Column(db.Integer, default=0)

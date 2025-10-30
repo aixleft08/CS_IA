@@ -11,7 +11,8 @@ const { isAuthenticated, signOut } = useAuth()
       <RouterLink :to="isAuthenticated ? '/dashboard' : '/'" class="brand">Enlingo</RouterLink>
     </div>
     <div class="center">
-      <RouterLink :to="isAuthenticated ? '/wordbank' : '/'" class="brand">Wordbank</RouterLink>
+      <RouterLink v-if="isAuthenticated" to="/wordbank" class="brand">Wordbank</RouterLink>
+      <span v-else class="brand" style="opacity:.4;cursor:not-allowed">Wordbank</span>
     </div>
     <div class="right">
       <button v-if="isAuthenticated" class="link-btn" @click="signOut">Sign Out</button>
