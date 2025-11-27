@@ -1,15 +1,21 @@
 <script setup>
 import NavBar from '@/components/NavBar.vue'
 import { useAuth } from '@/composables/useAuth'
-import { onMounted } from 'vue'
+import { useLastReading } from '@/composables/useLastReading'
+import { onMounted, computed } from 'vue'
 
 const { user, fetchMe, isLoggedIn } = useAuth()
+const { last, loading, fetchLastReading } = useLastReading()
 
-onMounted(() => {
+onMounted(async () => {
   if (isLoggedIn()) {
-    fetchMe()
+    await fetchMe()
+    await fetchLastReading()
   }
 })
+
+const lastHref = computed(() => last.value ? `/read/${last.value.id}` : '/search')
+const lastText = computed(() => last.value?.title || '—')
 </script>
 
 <template>
@@ -19,7 +25,14 @@ onMounted(() => {
     <main class="dash-main">
       <section class="panel">
         <h1>Welcome home<span v-if="user?.name">, {{ user.name }}</span></h1>
-        <p class="sub">You were reading <router-link to="/search" class="inline-link">xxx</router-link>.</p>
+
+        <p class="sub" v-if="loading">You were reading …</p>
+        <p class="sub" v-else>
+          You were reading
+          <router-link :to="lastHref" class="inline-link">
+            {{ lastText }}
+          </router-link>.
+        </p>
 
         <div class="divider"></div>
 
@@ -36,6 +49,7 @@ onMounted(() => {
     </main>
   </div>
 </template>
+
 
 <style scoped>
 .dash{min-height:100vh;display:flex;flex-direction:column;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%)}

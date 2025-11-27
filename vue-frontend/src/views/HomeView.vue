@@ -34,7 +34,7 @@ const authed = computed(() => isAuthenticated.value)
 </template>
 
 <style scoped>
-.home-container{min-height:100vh;display:flex;flex-direction:column;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);padding:20px}
+.home-container{min-height:100vh;display:flex;flex-direction:column;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);padding: 0;}
 .home-card{background:#fff;padding:2.5rem;border-radius:12px;box-shadow:0 10px 25px rgba(0,0,0,.1);width:100%;max-width:450px;text-align:center;margin:40px auto 0}
 .home-header{margin-bottom:1.5rem}
 .home-header h1{color:#333;font-size:2rem;font-weight:700;margin-bottom:.5rem}

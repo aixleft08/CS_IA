@@ -75,12 +75,14 @@ class Text(db.Model):
     difficulty = db.Column(db.Float)
     tags = db.relationship('Tag', secondary=text_tag_association, backref='texts')
 
-    def __init__(self, title, content, url, authors, date=None):
+    def __init__(self, title, content, url=None, authors=None, date=None, difficulty=None):
         self.title = title
         self.content = content
         self.url = url
         self.authors = authors
         self.date = date or datetime.utcnow()
+        if difficulty is not None:
+            self.difficulty = difficulty
 
     #Method stubs (implement logic as needed)
     def calculate_total_pages(self):
@@ -119,6 +121,7 @@ class Log(db.Model):
     elapsed_time_seconds = db.Column(db.Integer)
     date = db.Column(db.DateTime, default=datetime.utcnow)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    text_id = db.Column(db.Integer, db.ForeignKey('text.id'))  # <---
 
     def __repr__(self):
         return f'<Log {self.id} for User {self.user_id}>'

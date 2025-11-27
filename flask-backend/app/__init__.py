@@ -26,7 +26,7 @@ def create_app():
 
     CORS(app, resources={r"/api/*": {"origins": "*"}}, supports_credentials=True)
 
-    from app.routes import auth, users, articles, quizzes, translations, word_bank
+    from app.routes import auth, users, articles, quizzes, translations, word_bank, dev
 
     app.register_blueprint(auth)
     app.register_blueprint(users)
@@ -34,6 +34,7 @@ def create_app():
     app.register_blueprint(quizzes)
     app.register_blueprint(translations)
     app.register_blueprint(word_bank)
+    app.register_blueprint(dev)
 
     @app.get("/health")
     def health():

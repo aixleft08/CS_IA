@@ -30,7 +30,7 @@ def login():
     if not user or not user.verify_password(password):
         return jsonify({'error': 'Invalid credentials'}), 401
 
-    access_token = create_access_token(identity=user.id)
+    access_token = create_access_token(identity=str(user.id))
     resp = jsonify({
         'user': {
             'id': user.id,
@@ -74,7 +74,7 @@ def register():
     db.session.add(user)
     db.session.commit()
 
-    access_token = create_access_token(identity=user.id)
+    access_token = create_access_token(identity=str(user.id))
 
     resp = jsonify({
         'user': {
@@ -170,6 +170,26 @@ def get_library():
     
     return jsonify({'library': texts})
 
+@users.route('/last-reading', methods=['GET'])
+@jwt_required()
+def last_reading():
+    user_id = get_jwt_identity()
+
+    last_log = (Log.query
+                  .filter_by(user_id=user_id)
+                  .filter(Log.text_id.isnot(None))
+                  .order_by(Log.date.desc())
+                  .first())
+
+    if not last_log:
+        return jsonify({'last': None}), 200
+
+    text = Text.query.get(last_log.text_id)
+    if not text:
+        return jsonify({'last': None}), 200
+
+    return jsonify({'last': {'id': text.id, 'title': text.title}}), 200
+
 # ---Articles routes---
 articles = Blueprint('articles', __name__, url_prefix='/api/articles')
 
@@ -223,18 +243,25 @@ def search_articles():
     user = User.query.get(user_id)
     if not user:
         return jsonify({'error': 'Unauthorized'}), 401
-    
+
     title = request.args.get('title')
     tag = request.args.get('tag')
+    limit = min(int(request.args.get('limit', 20)), 50)
+
     query = Text.query
-    
+
     if title:
         query = query.filter(Text.title.ilike(f'%{title}%'))
     if tag:
         query = query.join(Text.tags).filter(Tag.name.ilike(f'%{tag}%'))
-    
-    articles = query.all()
-    
+
+    articles = query.order_by(Text.date.desc()).limit(limit).all()
+
+    def excerpt(text, length=140):
+        if not text:
+            return ''
+        return text[:length] + ('…' if len(text) > length else '')
+
     return jsonify({
         'results': [{
             'id': a.id,
@@ -242,9 +269,32 @@ def search_articles():
             'authors': a.authors,
             'url': a.url,
             'difficulty': a.difficulty,
-            'tags': [t.name for t in a.tags]
+            'tags': [t.name for t in a.tags],
+            'excerpt': excerpt(a.content),
+            'date': a.date.isoformat() if a.date else None,
         } for a in articles]
     })
+
+@articles.route('/<int:id>', methods=['DELETE'])
+@jwt_required()
+def delete_article(id):
+    user_id = get_jwt_identity()
+
+    article = Text.query.get(id)
+    if not article:
+        return jsonify({'error': 'Article not found'}), 404
+
+    from app.models import user_text
+    db.session.execute(user_text.delete().where(user_text.c.text_id == id))
+
+    Log.query.filter_by(text_id=id).delete(synchronize_session=False)
+
+    db.session.delete(article)
+    db.session.commit()
+
+    return jsonify({'deleted': id}), 200
+
+
 
 # ---Quizzes routes---
 quizzes = Blueprint('quizzes', __name__, url_prefix='/api/quizzes')
@@ -419,3 +469,40 @@ def clear_words():
     db.session.commit()
     
     return jsonify({'message': 'Word bank cleared'})
+
+
+# ---Dev routes---
+dev = Blueprint('dev', __name__, url_prefix='/api/dev')
+
+@dev.route('/seed-articles', methods=['POST'])
+@jwt_required()
+def seed_articles():
+    user_id = get_jwt_identity()
+
+    samples = [
+        Text(
+            title="Reading practice: Daily routines",
+            content="This is a simple article about daily routines. You wake up, you eat, you study...",
+            url="https://example.com/routines",
+            authors="System",
+            difficulty=0.3,
+        ),
+        Text(
+            title="Travel story: A day in Tokyo",
+            content="Tokyo is a busy city. In this article, we will explore Shibuya, Senso-ji, and ramen shops...",
+            url="https://example.com/tokyo",
+            authors="System",
+            difficulty=0.5,
+        ),
+        Text(
+            title="English for school projects",
+            content="When writing a school project, it's important to structure your ideas...",
+            url="https://example.com/school",
+            authors="System",
+            difficulty=0.4,
+        ),
+    ]
+
+    db.session.add_all(samples)
+    db.session.commit()
+    return jsonify({"inserted": len(samples)}), 201
