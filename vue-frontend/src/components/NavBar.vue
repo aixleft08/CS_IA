@@ -11,20 +11,59 @@ function isActive(path) {
 </script>
 
 <template>
-  <header class="appbar" :class="{ 'no-center': !isAuthenticated, guest: !isAuthenticated }">
+  <header
+    class="appbar"
+    :class="{ 'no-center': !isAuthenticated, guest: !isAuthenticated }"
+  >
     <div class="left">
       <RouterLink to="/" class="brand">Enlingo</RouterLink>
     </div>
 
     <nav v-if="isAuthenticated" class="center">
-      <RouterLink to="/dashboard" class="tab" :class="{ active: isActive('/dashboard') }">Dashboard</RouterLink>
-      <RouterLink to="/search"    class="tab" :class="{ active: isActive('/search') }">Articles</RouterLink>
-      <RouterLink to="/wordbank"  class="tab" :class="{ active: isActive('/wordbank') }">Wordbank</RouterLink>
+      <RouterLink
+        to="/dashboard"
+        class="tab"
+        :class="{ active: isActive('/dashboard') }"
+      >
+        Dashboard
+      </RouterLink>
+
+      <RouterLink
+        to="/search"
+        class="tab"
+        :class="{ active: isActive('/search') }"
+      >
+        Articles
+      </RouterLink>
+
+      <RouterLink
+        to="/wordbank"
+        class="tab"
+        :class="{ active: isActive('/wordbank') }"
+      >
+        Wordbank
+      </RouterLink>
+
+      <RouterLink
+        to="/quiz"
+        class="tab"
+        :class="{ active: isActive('/quiz') }"
+      >
+        Quiz
+      </RouterLink>
     </nav>
 
     <div class="right">
-      <button v-if="isAuthenticated" class="btn" @click="signOut">Sign Out</button>
-      <RouterLink v-else to="/sign-in" class="btn guest-btn">Sign In</RouterLink>
+      <button
+        v-if="isAuthenticated"
+        class="btn"
+        @click="signOut"
+      >
+        Sign Out
+      </button>
+      <RouterLink v-else to="/sign-in" class="btn guest-btn">
+        Sign In
+      </RouterLink>
     </div>
   </header>
 </template>

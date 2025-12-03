@@ -84,7 +84,7 @@ class Text(db.Model):
         if difficulty is not None:
             self.difficulty = difficulty
 
-    #Method stubs (implement logic as needed)
+    # Method stubs
     def calculate_total_pages(self):
         pass
 
@@ -121,7 +121,27 @@ class Log(db.Model):
     elapsed_time_seconds = db.Column(db.Integer)
     date = db.Column(db.DateTime, default=datetime.utcnow)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
-    text_id = db.Column(db.Integer, db.ForeignKey('text.id'))  # <---
+    text_id = db.Column(db.Integer, db.ForeignKey('text.id'))
 
     def __repr__(self):
         return f'<Log {self.id} for User {self.user_id}>'
+
+class Translation(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    text = db.Column(db.String, nullable=False, index=True)
+    source_lang = db.Column(db.String(8), nullable=False)
+    target_lang = db.Column(db.String(8), nullable=False)
+    translated_text = db.Column(db.String, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    __table_args__ = (
+        db.UniqueConstraint(
+            'text',
+            'source_lang',
+            'target_lang',
+            name='uix_translation_text_langs'
+        ),
+    )
+
+    def __repr__(self):
+        return f'<Translation {self.text} {self.source_lang}->{self.target_lang}>'

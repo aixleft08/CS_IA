@@ -1,11 +1,66 @@
+import random
+import requests
 from flask import Blueprint, request, jsonify, session
-from app.models import db, User, Word, Text, Tag, Log
-from werkzeug.security import check_password_hash
+from app.models import db, User, Word, Text, Tag, Log, Translation, user_word
 from flask import current_app as app
 from flask_jwt_extended import (
     create_access_token, get_jwt_identity,
     jwt_required, set_access_cookies, unset_jwt_cookies, get_jwt)
 from datetime import timedelta, datetime, timezone
+
+# Helper functions
+def get_or_create_translation(text, source='en', target='zh'):
+    normalized = (text or '').strip()
+    if not normalized:
+        return None
+
+    t = Translation.query.filter_by(
+        text=normalized,
+        source_lang=source,
+        target_lang=target
+    ).first()
+    if t:
+        return t
+
+    base_url = "https://translate.googleapis.com/translate_a/single"
+    params = {
+        "client": "gtx",
+        "sl": source,   # source language, e.g. 'en'
+        "tl": target,   # target language, e.g. 'zh'
+        "dt": ["t", "bd"],  # multiple dt params -> main text + dictionary
+        "dj": "1",
+        "q": normalized,
+    }
+
+    try:
+        resp = requests.get(base_url, params=params, timeout=8)
+        resp.raise_for_status()
+        data = resp.json()
+
+        sentences = data.get("sentences", [])
+        translated = "".join(s.get("trans", "") for s in sentences).strip()
+        if not translated:
+            return None
+    except Exception:
+        return None
+
+    t = Translation(
+        text=normalized,
+        source_lang=source,
+        target_lang=target,
+        translated_text=translated,
+    )
+    db.session.add(t)
+    db.session.flush()
+
+    return t
+
+def _get_user_or_401():
+    user_id = get_jwt_identity()
+    user = User.query.get(user_id)
+    if not user:
+        return None, (jsonify({'error': 'Unauthorized'}), 401)
+    return user, None
 
 # ---authentication routes---
 auth = Blueprint('auth', __name__, url_prefix='/api/auth')
@@ -295,60 +350,141 @@ def delete_article(id):
     return jsonify({'deleted': id}), 200
 
 
-
 # ---Quizzes routes---
 quizzes = Blueprint('quizzes', __name__, url_prefix='/api/quizzes')
 
-@quizzes.route('/generate', methods=['POST'])
+@quizzes.route('/wordbank', methods=['GET'])
 @jwt_required()
-def generate_quiz():
-    user_id = get_jwt_identity()
-    user = User.query.get(user_id)
-    if not user:
-        return jsonify({'error': 'Unauthorized'}), 401
-    
-    data = request.json
-    article_id = data.get('article_id')
-    
-    # Need to implement quiz generation logic here later
-    # This is a stub - replace with actual quiz generation
-    quiz = {
-        'id': 1,
-        'article_id': article_id,
-        'questions': [
-            {
-                'id': 1,
-                'question': 'Sample question 1',
-                'options': ['A', 'B', 'C', 'D'],
-                'correct_answer': 'A'
-            },
-            # Add more questions...
-        ]
-    }
-    
-    return jsonify({'quiz': quiz})
+def generate_wordbank_quiz():
+    user, error_resp = _get_user_or_401()
+    if error_resp:
+        return error_resp
 
-@quizzes.route('/result', methods=['GET'])
+    try:
+        limit = int(request.args.get('limit', 10))
+    except ValueError:
+        limit = 10
+    limit = max(1, min(limit, 50))
+
+    candidates = []
+    for w in user.words:
+        t = Translation.query.filter_by(
+            text=w.lemma,
+            source_lang='en',
+            target_lang='zh'
+        ).first()
+        if t and t.translated_text:
+            candidates.append((w, t))
+
+    if not candidates:
+        return jsonify({'error': 'No words with translations in wordbank'}), 400
+
+    if len(candidates) > limit:
+        candidates = random.sample(candidates, limit)
+    else:
+        random.shuffle(candidates)
+
+    questions = []
+    for w, t in candidates:
+        lemma = (w.lemma or '').strip()
+        questions.append({
+            'id': w.id,
+            'zh': t.translated_text,
+            'hint': lemma[0] if lemma else None,
+        })
+
+    return jsonify({
+        'mode': 'wordbank_zh_to_en',
+        'count': len(questions),
+        'questions': questions,
+    }), 200
+
+@quizzes.route('/wordbank/submit', methods=['POST'])
 @jwt_required()
-def get_quiz_result():
-    user_id = get_jwt_identity()
-    user = User.query.get(user_id)
-    if not user:
-        return jsonify({'error': 'Unauthorized'}), 401
-    
-    quiz_id = request.args.get('quiz_id')
-    
-    # Check if quiz is complete (stub implementation)
-    # Need to implement actual quiz completion tracking later
-    is_complete = True  # Replace with actual logic
-    
-    if not is_complete:
-        return jsonify({'error': 'Quiz incomplete'}), 400
-    
-    # Calculate score (stub)
-    score = 80  # Need to replace with actual scoring logic later
-    
-    return jsonify({'results': score})
+def submit_wordbank_quiz():
+    user, error_resp = _get_user_or_401()
+    if error_resp:
+        return error_resp
+
+    data = request.json or {}
+    answers = data.get('answers') or []
+
+    if not isinstance(answers, list) or not answers:
+        return jsonify({'error': 'Missing or empty answers list'}), 400
+
+    total = 0
+    correct = 0
+    details = []
+
+    touched_word_ids = set()
+
+    for item in answers:
+        try:
+            wid = int(item.get('id'))
+        except (TypeError, ValueError):
+            continue
+
+        given_raw = (item.get('answer') or '').strip()
+        if not given_raw:
+            word_obj = Word.query.get(wid)
+            if not word_obj:
+                continue
+            expected = (word_obj.lemma or '').strip()
+            total += 1
+            details.append({
+                'id': wid,
+                'correct': False,
+                'expected': expected,
+                'given': given_raw,
+            })
+            touched_word_ids.add(wid)
+            continue
+
+        word_obj = Word.query.get(wid)
+        if not word_obj:
+            continue
+
+        expected = (word_obj.lemma or '').strip()
+        total += 1
+
+        is_correct = expected.lower() == given_raw.lower()
+        if is_correct:
+            correct += 1
+
+        details.append({
+            'id': wid,
+            'correct': is_correct,
+            'expected': expected,
+            'given': given_raw,
+        })
+        touched_word_ids.add(wid)
+
+    if touched_word_ids:
+        for wid in touched_word_ids:
+            db.session.execute(
+                user_word.update()
+                .where(
+                    user_word.c.user_id == user.id,
+                    user_word.c.word_id == wid,
+                )
+                .values(
+                    number_of_times_seen=user_word.c.number_of_times_seen + 1
+                )
+            )
+
+    if total > 0:
+        user.quizzes_done = (user.quizzes_done or 0) + 1
+
+    db.session.commit()
+
+    accuracy = (correct / total) if total > 0 else 0.0
+
+    return jsonify({
+        'total': total,
+        'correct': correct,
+        'accuracy': accuracy,
+        'details': details,
+    }), 200
 
 # ---Translations routes---
 translations = Blueprint('translations', __name__, url_prefix='/api/translations')
@@ -362,19 +498,23 @@ def get_translations():
         return jsonify({'error': 'Unauthorized'}), 401
     
     text = request.args.get('text')
+    source = request.args.get('source', 'en')
+    target = request.args.get('target', 'zh')
+
     if not text:
         return jsonify({'error': "Missing 'text' parameter"}), 400
-    
-    # Implement actual translation logic here
-    # This is a stub using a simple mapping
-    translation_map = {
-        'hello': '你好',
-        # Need to add more translations later or use a translation service
-    }
-    
-    translation = translation_map.get(text.lower(), f"{text}_zh")
-    
-    return jsonify({'translation': translation})
+
+    t = get_or_create_translation(text, source=source, target=target)
+    if not t:
+        return jsonify({'error': 'Could not translate'}), 502
+
+    return jsonify({
+        'translation': t.translated_text,
+        'source_lang': t.source_lang,
+        'target_lang': t.target_lang,
+        'cached': True
+    }), 200
+
 
 # ---Word Bank routes---
 word_bank = Blueprint('word_bank', __name__, url_prefix='/api')
@@ -387,19 +527,24 @@ def list_words():
     if not user:
         return jsonify({'error': 'Unauthorized'}), 401
 
-    # user.words comes from the many-to-many
-    words = [
-        {
+    words_payload = []
+    for w in user.words:
+        t = Translation.query.filter_by(
+            text=w.lemma,
+            source_lang='en',
+            target_lang='zh'
+        ).first()
+        zh_text = t.translated_text if t else None
+
+        words_payload.append({
             'id': w.id,
             'lemma': w.lemma,
             'lemma_rank': w.lemma_rank,
             'word_rank': w.word_rank,
-        }
-        for w in user.words
-    ]
+            'translation': zh_text,
+        })
 
-    return jsonify({'words': words}), 200
-
+    return jsonify({'words': words_payload}), 200
 
 @word_bank.route('/words', methods=['POST'])
 @jwt_required()
@@ -409,29 +554,39 @@ def add_word():
     if not user:
         return jsonify({'error': 'Unauthorized'}), 401
     
-    data = request.json
+    data = request.json or {}
     word_text = data.get('word')
-    
+
     if not word_text:
         return jsonify({'error': 'Missing word parameter'}), 400
-    
-    # Check if word already exists for user
-    existing_word = Word.query.filter_by(lemma=word_text.lower()).first()
+
+    lemma = (word_text or '').strip().lower()
+    if not lemma:
+        return jsonify({'error': 'Missing word parameter'}), 400
+
+    existing_word = Word.query.filter_by(lemma=lemma).first()
     if existing_word and existing_word in user.words:
         return jsonify({'error': 'Duplicate word'}), 409
-    
-    # Create or get word
-    word = Word.query.filter_by(lemma=word_text.lower()).first()
+
+    word = existing_word
     if not word:
-        word = Word(lemma=word_text.lower(), lemma_rank=0, word_rank=0)
+        word = Word(lemma=lemma, lemma_rank=0, word_rank=0)
         db.session.add(word)
         db.session.flush()
-    
-    # Add word to user's word bank
+
+    t = get_or_create_translation(lemma, source='en', target='zh')
+    zh_text = t.translated_text if t else None
+
     if word not in user.words:
         user.words.append(word)
         db.session.commit()
-        return jsonify({'word': {'id': word.id, 'lemma': word.lemma}}), 201
+        return jsonify({
+            'word': {
+                'id': word.id,
+                'lemma': word.lemma,
+                'translation': zh_text,
+            }
+        }), 201
     
     return jsonify({'error': 'Action declined'}), 500
 
@@ -450,9 +605,10 @@ def delete_word(id):
     if word in user.words:
         user.words.remove(word)
         db.session.commit()
-        return jsonify({'message': 'Word deleted'})
+        return jsonify({'message': 'Word deleted'}), 200
     
     return jsonify({'error': 'Word not found in word bank'}), 404
+
 
 @word_bank.route('/words', methods=['DELETE'])
 @jwt_required()
@@ -468,7 +624,7 @@ def clear_words():
     user.words = []
     db.session.commit()
     
-    return jsonify({'message': 'Word bank cleared'})
+    return jsonify({'message': 'Word bank cleared'}), 200
 
 
 # ---Dev routes---

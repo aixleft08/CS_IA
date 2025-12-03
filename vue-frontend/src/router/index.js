@@ -7,6 +7,7 @@ import DashboardView from '@/views/DashboardView.vue'
 import NotFoundView from '@/views/NotFoundView.vue'
 import WordbankView from '@/views/WordBankView.vue'
 import SearchView from '@/views/SearchView.vue'
+import QuizView from '@/views/QuizView.vue'
 import ReadingView from '@/views/ReadingView.vue'
 
 const router = createRouter({
@@ -19,6 +20,7 @@ const router = createRouter({
     { path: '/dashboard', component: DashboardView, meta: { requiresAuth: true } },
     { path: '/wordbank', component: WordbankView, meta: { requiresAuth: true } },
     { path: '/search', component: SearchView, meta: { requiresAuth: true } },
+    { path: '/quiz', component: QuizView, meta: { requiresAuth: true } },
     { path: '/read/:id', component: ReadingView, meta: { requiresAuth: true } },
 
     // Catch-all 404

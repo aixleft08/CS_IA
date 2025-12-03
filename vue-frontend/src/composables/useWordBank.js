@@ -17,7 +17,14 @@ export function useWordBank() {
       const res = await fetch('/api/words', { headers: { Authorization: `Bearer ${token.value}` } })
       const data = await res.json()
       if (!res.ok) { error.value = data.error || 'Failed to load words'; words.value = []; return }
-      words.value = (data.words || []).map(w => ({ id: w.id, word: w.lemma, entry: null, entryError: '' }))
+      words.value = (data.words || []).map(w => ({
+        id: w.id,
+        word: w.lemma,
+        translation: w.translation || '',
+        entry: null,
+        entryError: '',
+      }))
+
     } catch {
       error.value = 'Network error'; words.value = []
     } finally { loading.value = false }
@@ -33,7 +40,13 @@ export function useWordBank() {
       })
       const data = await res.json()
       if (res.ok && data.word) {
-        words.value.push({ id: data.word.id, word: data.word.lemma, entry: null, entryError: '' })
+        words.value.push({
+          id: data.word.id,
+          word: data.word.lemma,
+          translation: data.word.translation || '',
+          entry: null,
+          entryError: '',
+        })
         return { ok: true }
       } else if (res.status === 409) return { ok: false, reason: 'duplicate' }
       return { ok: false, reason: data.error || 'unknown' }
