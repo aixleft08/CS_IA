@@ -39,7 +39,7 @@ const lastText = computed(() => last.value?.title || '—')
         <p class="progress-title">Your progress:</p>
         <div class="metrics">
           <div class="metric"><span class="label">Minutes read:</span><span class="value">#</span></div>
-          <div class="metric"><span class="label">Wordbank size:</span><span class="value">#</span></div>
+          <div class="metric"><span class="label">Quizzes completed:</span><span class="value">#</span></div>
         </div>
 
         <router-link to="/search" class="primary-btn">Start reading</router-link>
