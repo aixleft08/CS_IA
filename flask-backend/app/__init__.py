@@ -1,11 +1,11 @@
-from datetime import timedelta
+# app/__init__.py
+import os
 from flask import Flask, jsonify
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager
 
 from app.config import Config
 from app.models import db
-
 
 def create_app():
     app = Flask(__name__)
@@ -15,19 +15,17 @@ def create_app():
     with app.app_context():
         db.create_all()
 
-    app.config["JWT_SECRET_KEY"] = "dev_change_me"
-    app.config["JWT_TOKEN_LOCATION"] = ["headers", "cookies"]
-    app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(days=14)
-    app.config["JWT_COOKIE_SAMESITE"] = "Lax"
-    app.config["JWT_COOKIE_SECURE"] = False
-    app.config["JWT_COOKIE_CSRF_PROTECT"] = False
+    JWTManager(app)
 
-    jwt = JWTManager(app)
+    frontend_origin = os.getenv("FRONTEND_ORIGIN", "http://localhost:5173")
+    CORS(
+        app,
+        resources={r"/api/*": {"origins": [frontend_origin]}},
+        supports_credentials=True,
+    )
 
-    CORS(app, resources={r"/api/*": {"origins": "*"}}, supports_credentials=True)
-
+    # Blueprints
     from app.routes import auth, users, articles, quizzes, translations, word_bank, dev
-
     app.register_blueprint(auth)
     app.register_blueprint(users)
     app.register_blueprint(articles)
@@ -38,10 +36,10 @@ def create_app():
 
     @app.get("/health")
     def health():
-      return {"ok": True}
+        return {"ok": True}
 
     @app.get("/")
     def index():
-      return jsonify({"message": "API is running!"}), 200
+        return jsonify({"message": "API is running!"}), 200
 
     return app

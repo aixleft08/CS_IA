@@ -23,12 +23,10 @@ const router = createRouter({
     { path: '/quiz', component: QuizView, meta: { requiresAuth: true } },
     { path: '/read/:id', component: ReadingView, meta: { requiresAuth: true } },
 
-    // Catch-all 404
     { path: '/:pathMatch(.*)*', component: NotFoundView },
   ],
 })
 
-// Simple auth guard
 router.beforeEach((to) => {
   const token = localStorage.getItem('authToken')
   if (to.meta.requiresAuth && !token) {

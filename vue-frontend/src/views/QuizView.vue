@@ -71,12 +71,10 @@ onMounted(() => {
     <NavBar />
 
     <main class="main">
-      <!-- Loading -->
       <section class="card" v-if="loading && !error">
         <p>Loading quiz…</p>
       </section>
 
-      <!-- Error -->
       <section class="card error" v-else-if="error">
         <h1>Quiz</h1>
         <p>{{ error }}</p>

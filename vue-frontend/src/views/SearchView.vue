@@ -48,6 +48,7 @@ async function onDeleteArticle(id) {
           :article="a"
           show-delete
           @delete="onDeleteArticle(a.id)"
+          @tag="(t) => fetchArticles(`tag:${t}`)"
         />
         <p v-if="!articles.length">No articles yet.</p>
       </section>

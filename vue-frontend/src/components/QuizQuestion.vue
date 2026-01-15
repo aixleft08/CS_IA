@@ -155,7 +155,6 @@ function onSubmit() {
   margin-top:.1rem;
 }
 
-/* hint */
 .hint{
   margin:0;
   font-size:.9rem;
@@ -193,7 +192,6 @@ function onSubmit() {
   flex-wrap:wrap;
 }
 
-/* Buttons */
 .btn{
   border:none;
   border-radius:10px;

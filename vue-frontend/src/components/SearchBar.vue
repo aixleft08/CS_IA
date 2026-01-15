@@ -1,7 +1,11 @@
 <script setup>
-import { ref, watch, onMounted } from 'vue'
+import { ref, watch, onMounted, onBeforeUnmount } from 'vue'
+
 const emit = defineEmits(['submit'])
 const q = ref('')
+
+let t = null
+const DEBOUNCE_MS = 350
 
 function submit() {
   emit('submit', q.value.trim())
@@ -12,12 +16,36 @@ onMounted(() => {
   if (el) el.focus()
 })
 
-watch(q, () => {/* reserved for debounce later */})
+watch(q, (val) => {
+  const term = (val || '').trim()
+
+  clearTimeout(t)
+
+  if (!term) {
+    emit('submit', '')
+    return
+  }
+
+  // ✅ Otherwise, debounce the search
+  t = setTimeout(() => {
+    emit('submit', term)
+  }, DEBOUNCE_MS)
+})
+
+onBeforeUnmount(() => {
+  clearTimeout(t)
+})
 </script>
 
 <template>
   <form class="search" @submit.prevent="submit" role="search">
-    <input id="search-input" v-model="q" type="search" placeholder="Search for articles…" />
+    <input
+      id="search-input"
+      v-model="q"
+      type="search"
+      placeholder="Search for articles…"
+      autocomplete="off"
+    />
     <button type="submit">Enter</button>
   </form>
 </template>

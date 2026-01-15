@@ -47,11 +47,22 @@ async function handleReset() {
   notify('Wordbank cleared')
 }
 
-async function handleAdd(word) {
+async function handleAdd(rawWord) {
+  const word = (rawWord || '').trim()
+  if (!word) {
+    notify('Please enter a word', 'warn')
+    return
+  }
+
   const res = await addWord(word)
+
   if (res?.ok) {
-    notify(`Added “${word}” to wordbank`)
-  } else if (res?.reason === 'duplicate') {
+    const label = res.word || word
+    notify(`Added “${label}” to wordbank`)
+    return
+  }
+
+  if (res?.reason === 'duplicate') {
     notify(`“${word}” is already in your wordbank`, 'info')
   } else if (res?.reason === 'unauthorized') {
     notify('Please sign in to manage your wordbank', 'warn')
@@ -63,9 +74,11 @@ async function handleAdd(word) {
 }
 
 async function handleDelete(id) {
+  // capture BEFORE deleteWord mutates the list
   const row = words.value.find(w => w.id === id)
   await deleteWord(id)
-  if (row) {
+
+  if (row?.word) {
     notify(`Removed “${row.word}”`, 'info')
   } else {
     notify('Word removed', 'info')

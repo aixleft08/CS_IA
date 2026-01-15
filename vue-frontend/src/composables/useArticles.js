@@ -17,17 +17,37 @@ export function useArticles() {
       articles.value = []
       return
     }
+
+    const raw = (query || '').trim()
+
+    let title = ''
+    let tag = ''
+
+    if (raw.toLowerCase().startsWith('tag:')) {
+      tag = raw.slice(4).trim()
+    } else if (raw.startsWith('#')) {
+      tag = raw.slice(1).trim()
+    } else {
+      title = raw
+    }
+
     loading.value = true
     error.value = ''
+
     try {
-      const url = query
-        ? `/api/articles/search?title=${encodeURIComponent(query)}`
-        : '/api/articles/search'
+      const params = new URLSearchParams()
+      if (title) params.set('title', title)
+      if (tag) params.set('tag', tag)
+
+      const url =
+        params.toString().length > 0
+          ? `/api/articles/search?${params.toString()}`
+          : '/api/articles/search'
+
       const res = await fetch(url, {
-        headers: {
-          Authorization: `Bearer ${token.value}`,
-        },
+        headers: { Authorization: `Bearer ${token.value}` },
       })
+
       const data = await res.json()
       if (!res.ok) {
         error.value = data.error || 'Failed to load articles'
@@ -91,7 +111,6 @@ export function useArticles() {
       if (!res.ok) {
         error.value = data.error || 'Failed to seed'
       } else {
-        // reload list after seeding
         await fetchArticles()
       }
     } catch (e) {
@@ -112,10 +131,7 @@ export function useArticles() {
         },
         body: JSON.stringify({ elapsed_time_seconds: elapsedSeconds }),
       })
-      // you can ignore response for now
-    } catch (e) {
-      // swallow for now
-    }
+    } catch (e) {}
   }
 
   async function deleteArticle(id) {

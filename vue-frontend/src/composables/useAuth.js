@@ -1,4 +1,3 @@
-//api calls of user authentication, give output to forntend components
 import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 
@@ -38,7 +37,6 @@ export function useAuth() {
     const data = await res.json().catch(() => ({}))
 
     if (!res.ok) {
-      // 400 from backend = missing fields
       if (res.status === 400) {
         return {
           ok: false,
@@ -49,7 +47,6 @@ export function useAuth() {
           generalError: data.error || 'Please check your inputs.',
         }
       }
-      // 401 invalid credentials
       if (res.status === 401) {
         return {
           ok: false,
@@ -81,7 +78,6 @@ export function useAuth() {
     const data = await res.json().catch(() => ({}))
 
     if (!res.ok) {
-      // 409 username exists
       if (res.status === 409) {
         return {
           ok: false,
@@ -93,8 +89,6 @@ export function useAuth() {
           generalError: '',
         }
       }
-
-      // 400 missing / mismatch
       if (res.status === 400) {
         const msg = data.error || 'Please check your inputs.'
         return {

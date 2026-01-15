@@ -120,7 +120,6 @@ export function useWordbankQuiz() {
       return { submitted: false }
     }
 
-    // store current answer
     recordCurrentAnswer()
 
     if (isLastQuestion.value) {
@@ -128,7 +127,6 @@ export function useWordbankQuiz() {
       return { submitted: true, ...submitRes }
     }
 
-    // move to next question
     currentIndex.value += 1
     const nextQ = questions.value[currentIndex.value]
     const existing = userAnswers.value.find(a => a.id === nextQ.id)

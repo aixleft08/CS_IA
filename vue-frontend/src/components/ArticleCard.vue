@@ -3,7 +3,7 @@ const props = defineProps({
   article: { type: Object, required: true },
   showDelete: { type: Boolean, default: false },
 })
-const emit = defineEmits(['delete'])
+const emit = defineEmits(['delete', 'tag'])
 </script>
 
 <template>
@@ -24,6 +24,18 @@ const emit = defineEmits(['delete'])
     </header>
 
     <p class="summary">{{ article.summary }}</p>
+
+    <div v-if="article.tags?.length" class="tags">
+      <button
+        v-for="t in article.tags"
+        :key="t"
+        class="tag"
+        type="button"
+        @click.stop="emit('tag', t)"
+      >
+        {{ t }}
+      </button>
+    </div>
 
     <footer class="meta">
       <span v-if="article.authors">{{ article.authors }}</span>
@@ -83,6 +95,26 @@ const emit = defineEmits(['delete'])
   text-overflow: ellipsis;
   line-clamp: 3;
 }
+
+.tags{
+  display:flex;
+  flex-wrap:wrap;
+  gap:.4rem;
+  margin:.2rem 0 .55rem;
+}
+
+.tag{
+  font-size:.8rem;
+  padding:.18rem .55rem;
+  border-radius:999px;
+  border:1px solid #d7dbe2;
+  background:#f6f7f9;
+  color:#444;
+  font-weight:700;
+}
+
+.tag{ cursor:pointer; }
+.tag:hover{ background:#eef0f4; }
 
 .meta{
   color:#666;

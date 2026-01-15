@@ -74,28 +74,24 @@ function toggleRow(row) {
         <div></div>
       </div>
 
-      <!-- loading state -->
       <div v-if="loading" class="trow">
         <div></div>
         <div class="bold">Loading…</div>
         <div></div>
       </div>
 
-      <!-- error state -->
       <div v-else-if="error" class="trow">
         <div></div>
         <div class="bold" style="color:#c33">{{ error }}</div>
         <div></div>
       </div>
 
-      <!-- empty state -->
       <div v-else-if="!rows.length" class="trow">
         <div></div>
         <div class="bold">No words yet.</div>
         <div></div>
       </div>
 
-      <!-- normal rows -->
       <div
         v-else
         v-for="(r, i) in rows"
@@ -278,7 +274,6 @@ function toggleRow(row) {
   font-weight:600;
 }
 
-/* translation under word */
 .translation{
   display:block;
   color:#7b7b7b;

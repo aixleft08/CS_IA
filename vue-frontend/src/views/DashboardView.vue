@@ -14,8 +14,11 @@ onMounted(async () => {
   }
 })
 
-const lastHref = computed(() => last.value ? `/read/${last.value.id}` : '/search')
+const lastHref = computed(() => (last.value ? `/read/${last.value.id}` : '/search'))
 const lastText = computed(() => last.value?.title || '—')
+
+const minutesRead = computed(() => user.value?.minutes_read ?? 0)
+const quizzesDone = computed(() => user.value?.quizzes_done ?? 0)
 </script>
 
 <template>
@@ -24,7 +27,7 @@ const lastText = computed(() => last.value?.title || '—')
 
     <main class="dash-main">
       <section class="panel">
-        <h1>Welcome home<span v-if="user?.name">, {{ user.name }}</span></h1>
+        <h1>Welcome home<span v-if="user && user.name">, {{ user.name }}</span></h1>
 
         <p class="sub" v-if="loading">You were reading …</p>
         <p class="sub" v-else>
@@ -38,9 +41,16 @@ const lastText = computed(() => last.value?.title || '—')
 
         <p class="progress-title">Your progress:</p>
         <div class="metrics">
-          <div class="metric"><span class="label">Minutes read:</span><span class="value">#</span></div>
-          <div class="metric"><span class="label">Quizzes completed:</span><span class="value">#</span></div>
+          <div class="metric">
+            <span class="label">Minutes read:</span>
+            <span class="value">{{ minutesRead }}</span>
+          </div>
+          <div class="metric">
+            <span class="label">Quizzes Completed:</span>
+            <span class="value">{{ quizzesDone }}</span>
+          </div>
         </div>
+
 
         <router-link to="/search" class="primary-btn">Start reading</router-link>
       </section>
