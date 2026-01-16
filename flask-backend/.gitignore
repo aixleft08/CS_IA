@@ -1,3 +1,4 @@
 flask
+venv
 app/__pycache__
 instance
