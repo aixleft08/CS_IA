@@ -4,35 +4,43 @@ import { HashTable } from "@/utils/hashTable"
 
 const CACHE_CAPACITY = 509
 
+// Cache longer for good results, short for errors
 const TTL_OK_MS = 24 * 60 * 60 * 1000
 const TTL_ERR_MS = 2 * 60 * 1000
 
+// Translation cache
 let cache = new HashTable(CACHE_CAPACITY)
 const inFlight = new Map()
 
+// Trim input so " hi " and "hi" behave the same
 function normText(text) {
   return (text || "").trim()
 }
 
+// Unique key per (source, target, text)
 function makeKey(text, source, target) {
   const t = normText(text).toLowerCase()
   return `${source}:${target}:${t}`
 }
 
+// Read from cache and drop expired entries
 function cacheGet(key) {
   try {
     const record = cache.get(key)
     if (!record) return null
+
     if (record.expiresAt && Date.now() > record.expiresAt) {
       try { cache.removeKey(key) } catch {}
       return null
     }
+
     return record.value
   } catch {
     return null
   }
 }
 
+// Reset cache if it is full
 function cacheSet(key, value, ttlMs) {
   const record = { value, expiresAt: Date.now() + ttlMs }
 
@@ -49,19 +57,23 @@ export function useTranslations() {
   const { token } = useAuth()
   const loading = ref(false)
 
+  // Translate text via backend API with caching + dedupe
   async function translate(text, opts = {}) {
     const source = opts.source || "en"
     const target = opts.target || "zh"
     const normalized = normText(text)
 
+    // Quick rejects
     if (!normalized) return { ok: false, reason: "empty", translation: "" }
     if (!token.value) return { ok: false, reason: "unauthorized", translation: "" }
 
     const key = makeKey(normalized, source, target)
 
+    // Cached answer
     const cached = cacheGet(key)
     if (cached) return { ...cached, cached: true }
 
+    // If same request is already running, reuse it
     if (inFlight.has(key)) {
       return inFlight.get(key)
     }
@@ -69,6 +81,7 @@ export function useTranslations() {
     const p = (async () => {
       loading.value = true
       try {
+        // Build request URL
         const url =
           `/api/translations?text=${encodeURIComponent(normalized)}` +
           `&source=${encodeURIComponent(source)}` +

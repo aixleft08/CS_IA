@@ -32,6 +32,7 @@ def get_or_create_translation(text, source='en', target='zh'):
     if t:
         return t
 
+#Google Cloud Translation API
     base_url = "https://translate.googleapis.com/translate_a/single"
     params = {
         "client": "gtx",

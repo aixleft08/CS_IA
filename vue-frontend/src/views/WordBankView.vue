@@ -17,6 +17,7 @@ const {
   fetchEntry,
 } = useWordBank()
 
+// Last reading info
 const {
   last,
   loading: lastLoading,
@@ -42,11 +43,13 @@ onMounted(() => {
   fetchLastReading()
 })
 
+// Clear wordbank
 async function handleReset() {
   await clearWords()
   notify('Wordbank cleared')
 }
 
+// Add a word to front input box (extra functionality)
 async function handleAdd(rawWord) {
   const word = (rawWord || '').trim()
   if (!word) {
@@ -73,8 +76,9 @@ async function handleAdd(rawWord) {
   }
 }
 
+// Delete a word from the table
 async function handleDelete(id) {
-  // capture BEFORE deleteWord mutates the list
+  // Capture BEFORE deleteWord mutates the list
   const row = words.value.find(w => w.id === id)
   await deleteWord(id)
 

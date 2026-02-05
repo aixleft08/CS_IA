@@ -7,6 +7,7 @@ import { onMounted, computed } from 'vue'
 const { user, fetchMe, isLoggedIn } = useAuth()
 const { last, loading, fetchLastReading } = useLastReading()
 
+// On page load to refresh user
 onMounted(async () => {
   if (isLoggedIn()) {
     await fetchMe()
@@ -17,6 +18,7 @@ onMounted(async () => {
 const lastHref = computed(() => (last.value ? `/read/${last.value.id}` : '/search'))
 const lastText = computed(() => last.value?.title || '—')
 
+// Stats shown on dashboard
 const minutesRead = computed(() => user.value?.minutes_read ?? 0)
 const quizzesDone = computed(() => user.value?.quizzes_done ?? 0)
 </script>

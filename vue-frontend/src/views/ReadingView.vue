@@ -18,7 +18,7 @@ const { addWord, deleteWord } = useWordBank()
 
 const currentEntry = ref({ word: '', definition: '', translation: '', defs: [] })
 
-// toast
+// Toast
 const toastOpen = ref(false)
 const toastMsg = ref('')
 const toastType = ref('success')
@@ -29,7 +29,7 @@ function notify(message, type='success') {
   requestAnimationFrame(() => { toastOpen.value = true })
 }
 
-// ---- reading time tracking ----
+// Reading time tracking
 const startedAt = ref(0)
 const sentOnce = ref(false)
 
@@ -89,7 +89,7 @@ onBeforeUnmount(() => {
   document.removeEventListener('visibilitychange', onVisibilityChange)
 })
 
-// ---- dictionary helpers ----
+// Dictionary helpers
 function cleanWord(raw) {
   return raw.replace(/[.,!?;:()'"“”]/g, '').toLowerCase()
 }
@@ -137,7 +137,7 @@ async function onWordClick(rawWord) {
   }
 }
 
-// ---- undo/redo ----
+// Undo/redo
 const undoStack = new Stack({ maxSize: 200 })
 const redoStack = new Stack({ maxSize: 200 })
 

@@ -8,9 +8,9 @@ export class Stack {
     }
 
     this._cap = initialCapacity
-    this._arr = new Array(this._cap)
-    this._top = 0
-    this._max = maxSize
+    this._arr = new Array(this._cap) // storage
+    this._top = 0 // next free index
+    this._max = maxSize // max items to keep
   }
 
   size() {
@@ -25,22 +25,28 @@ export class Stack {
     return this._max
   }
 
+  // Look at the last item without removing it
   peek() {
     return this._top === 0 ? null : this._arr[this._top - 1]
   }
 
+  // Add item to the top
   push(item) {
+    // If max size reached, throw away the oldest item
     if (this._top >= this._max) {
       this._shiftLeftByOne()
       this._top -= 1
     }
 
+    // Grow array if needed
     if (this._top >= this._cap) this._grow()
+
     this._arr[this._top] = item
     this._top += 1
     return this._top
   }
 
+  // Remove and return the top item
   pop() {
     if (this._top === 0) return null
     this._top -= 1
@@ -49,11 +55,13 @@ export class Stack {
     return v
   }
 
+  // Clear stack contents
   clear() {
     for (let i = 0; i < this._top; i++) this._arr[i] = undefined
     this._top = 0
   }
 
+  // Pop from this stack and push into another stack
   moveTopTo(otherStack) {
     if (!(otherStack instanceof Stack)) {
       throw new Error("Stack: moveTopTo expects another Stack")
@@ -64,10 +72,12 @@ export class Stack {
     return item
   }
 
+  // Copy active items into a normal array
   toArray() {
     return this._arr.slice(0, this._top)
   }
 
+  // Get the last N items
   snapshot({ limit = 20 } = {}) {
     const n = Math.min(this._top, limit)
     return this._arr.slice(this._top - n, this._top)
@@ -75,13 +85,17 @@ export class Stack {
 
   _grow() {
     let newCap = this._cap * 2
-    if (Number.isFinite(this._max)) newCap = Math.min(newCap, Math.max(this._cap + 1, this._max))
+    if (Number.isFinite(this._max)) {
+      newCap = Math.min(newCap, Math.max(this._cap + 1, this._max))
+    }
+
     const next = new Array(newCap)
     for (let i = 0; i < this._top; i++) next[i] = this._arr[i]
     this._arr = next
     this._cap = newCap
   }
 
+  // Shift items left so we can drop the oldest entry
   _shiftLeftByOne() {
     for (let i = 1; i < this._top; i++) this._arr[i - 1] = this._arr[i]
     this._arr[this._top - 1] = undefined
@@ -89,6 +103,7 @@ export class Stack {
 }
 
 export function createUndoRedo({ historyLimit = 200 } = {}) {
+  // One for undo history, one for redo history
   const undo = new Stack({ initialCapacity: 32, maxSize: historyLimit })
   const redo = new Stack({ initialCapacity: 32, maxSize: historyLimit })
 

@@ -1,9 +1,11 @@
 import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 
+// Handles login, register, and auth state
 export function useAuth() {
   const router = useRouter()
 
+  // Stored user and token
   const user = ref(loadUser())
   const token = ref(localStorage.getItem('authToken') || '')
   const isAuthenticated = computed(() => !!token.value)
@@ -17,6 +19,7 @@ export function useAuth() {
     }
   }
 
+  // Save token and user after login/register
   function setAuth(t, u) {
     if (t) {
       localStorage.setItem('authToken', t)
@@ -126,6 +129,7 @@ export function useAuth() {
     router.push('/sign-in')
   }
 
+  // Refresh user info from backend
   async function fetchMe() {
     if (!token.value) return null
 
@@ -151,6 +155,7 @@ export function useAuth() {
     return null
   }
 
+  // Simple login check
   function isLoggedIn() {
     return !!token.value
   }

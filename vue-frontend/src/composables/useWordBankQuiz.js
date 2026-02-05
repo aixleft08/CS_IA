@@ -4,6 +4,7 @@ import { useAuth } from '@/composables/useAuth'
 export function useWordbankQuiz() {
   const { token } = useAuth()
 
+  // Quiz state
   const questions = ref([])
   const loading = ref(false)
   const error = ref('')
@@ -14,24 +15,30 @@ export function useWordbankQuiz() {
   const finished = ref(false)
   const submitting = ref(false)
 
+  // Current question based on index
   const currentQuestion = computed(
     () => questions.value[currentIndex.value] || {}
   )
 
+  // True when we're on the last question
   const isLastQuestion = computed(
     () => currentIndex.value === questions.value.length - 1
   )
 
+  // Progress bar percent
   const progressPercent = computed(() => {
     if (!questions.value.length) return 0
     return (currentIndex.value / questions.value.length) * 100
   })
 
+  // Save current input into userAnswers by question id
   function recordCurrentAnswer() {
     const q = currentQuestion.value
     if (!q?.id) return
+
     const trimmed = (answer.value || '').trim()
     const idx = userAnswers.value.findIndex(a => a.id === q.id)
+
     if (idx >= 0) {
       userAnswers.value[idx].answer = trimmed
     } else {
@@ -39,12 +46,14 @@ export function useWordbankQuiz() {
     }
   }
 
+  // Get quiz questions from backend
   async function fetchQuiz(limit = 10) {
     if (!token.value) {
       error.value = 'Please sign in to take a quiz'
       return
     }
 
+    // Reset quiz UI state
     loading.value = true
     error.value = ''
     finished.value = false
@@ -59,12 +68,14 @@ export function useWordbankQuiz() {
         headers: { Authorization: `Bearer ${token.value}` },
       })
       const data = await res.json()
+
       if (!res.ok) {
         error.value = data.error || 'Failed to load quiz'
         return
       }
 
       questions.value = data.questions || []
+
       if (!questions.value.length) {
         error.value = 'No quiz questions available'
         return
@@ -79,6 +90,7 @@ export function useWordbankQuiz() {
     }
   }
 
+  // Submit answers to results
   async function submitQuiz() {
     if (!token.value) {
       error.value = 'Please sign in to submit quiz'
@@ -115,11 +127,13 @@ export function useWordbankQuiz() {
     }
   }
 
+  // Next question, or submit if we're at the end
   async function goNextOrSubmit() {
     if (!questions.value.length || finished.value) {
       return { submitted: false }
     }
 
+    // Save current answer before moving on
     recordCurrentAnswer()
 
     if (isLastQuestion.value) {
@@ -127,6 +141,7 @@ export function useWordbankQuiz() {
       return { submitted: true, ...submitRes }
     }
 
+    // Move forward and restore saved answer if it exists
     currentIndex.value += 1
     const nextQ = questions.value[currentIndex.value]
     const existing = userAnswers.value.find(a => a.id === nextQ.id)
@@ -135,10 +150,12 @@ export function useWordbankQuiz() {
     return { submitted: false }
   }
 
+  // Start over with a fresh quiz
   async function restartQuiz(limit = 10) {
     await fetchQuiz(limit)
   }
 
+  // Helper for results/details view (find zh text by id)
   function getZhForDetail(id) {
     const q = questions.value.find(q => q.id === id)
     return q ? q.zh : ''

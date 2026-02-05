@@ -8,10 +8,12 @@ export function useWordBank() {
   const { lookup } = useDictionary()
   const { translate } = useTranslations()
 
+  // UI state
   const words = ref([])
   const loading = ref(false)
   const error = ref("")
 
+  // Get all saved words for the user
   async function fetchWords() {
     if (!token.value) {
       words.value = []
@@ -33,6 +35,7 @@ export function useWordBank() {
         return
       }
 
+      // Shape the backend data into what the UI uses
       const rows = (data.words || []).map((w) => ({
         id: w.id,
         word: w.lemma,
@@ -41,6 +44,7 @@ export function useWordBank() {
         entryError: "",
       }))
 
+      // If translation is missing, auto-fill it
       await Promise.all(
         rows.map(async (row) => {
           if (!row.translation && row.word) {
@@ -59,6 +63,7 @@ export function useWordBank() {
     }
   }
 
+  // Add a new word to the user's word bank
   async function addWord(word) {
     if (!token.value) return { ok: false, reason: "unauthorized" }
 
@@ -73,6 +78,7 @@ export function useWordBank() {
       })
       const data = await res.json().catch(() => ({}))
 
+      // Add new row locally if backend succeeded
       if (res.ok && data.word) {
         const row = {
           id: data.word.id,
@@ -82,6 +88,7 @@ export function useWordBank() {
           entryError: "",
         }
 
+        // Fill translation if backend didn't return one
         if (!row.translation && row.word) {
           const r = await translate(row.word, { source: "en", target: "zh" })
           if (r.ok) row.translation = r.translation
@@ -91,6 +98,7 @@ export function useWordBank() {
         return { ok: true, id: row.id }
       }
 
+      // Duplicate word
       if (res.status === 409) return { ok: false, reason: "duplicate" }
       return { ok: false, reason: data.error || "unknown" }
     } catch {
@@ -98,6 +106,7 @@ export function useWordBank() {
     }
   }
 
+  // Clear the whole word bank
   async function clearWords() {
     if (!token.value) return
     const res = await fetch("/api/words", {
@@ -107,6 +116,7 @@ export function useWordBank() {
     if (res.ok) words.value = []
   }
 
+  // Delete one word from the word bank
   async function deleteWord(id) {
     if (!token.value) return
     const res = await fetch(`/api/words/${id}`, {
@@ -116,9 +126,10 @@ export function useWordBank() {
     if (res.ok) words.value = words.value.filter((w) => w.id !== id)
   }
 
+  // Load dictionary info for one row (only when needed)
   async function fetchEntry(row) {
     if (!row?.word) return
-    if (row.entry) return
+    if (row.entry) return // already fetched
 
     const result = await lookup(row.word)
     if (!result.ok) {

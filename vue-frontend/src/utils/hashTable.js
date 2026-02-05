@@ -1,10 +1,14 @@
 const TOMBSTONE = Symbol("TOMBSTONE")
 
 function normalizeKey(key) {
+  // Convert different key types into a string
   const t = typeof key
   if (t === "string") return key
   if (t === "number" || t === "boolean") return String(key)
+
+  // Reject undefined keys
   if (key == null) throw new Error("HashTable: key cannot be null/undefined")
+
   try {
     return JSON.stringify(key)
   } catch {
@@ -14,12 +18,14 @@ function normalizeKey(key) {
 
 export class HashTable {
   constructor(capacity = 257) {
+    // Basic input check
     if (!Number.isInteger(capacity) || capacity <= 0) {
       throw new Error("HashTable: capacity must be a positive integer")
     }
+
     this._cap = capacity
-    this._arr = new Array(capacity).fill(null)
-    this._size = 0
+    this._arr = new Array(capacity).fill(null) // internal storage
+    this._size = 0 // number of active keys
   }
 
   size() {
@@ -34,7 +40,7 @@ export class HashTable {
     return this._size >= this._cap
   }
 
-  // djb2 hash function used
+  // djb2 hash function (fast string hash)
   // http://www.cse.yorku.ca/~oz/hash.html
   hashFunction(key) {
     const k = normalizeKey(key)
@@ -46,6 +52,7 @@ export class HashTable {
     return h % this._cap
   }
 
+  // True if key exists
   hasKey(key) {
     return this._findIndex(key) !== -1
   }
@@ -54,6 +61,7 @@ export class HashTable {
     return this.hasKey(key)
   }
 
+  // Get value for a key (throws if missing)
   get(key) {
     const idx = this._findIndex(key)
     if (idx === -1) {
@@ -62,6 +70,7 @@ export class HashTable {
     return this._arr[idx].value
   }
 
+  // Insert new key/value (throws if full or duplicate)
   insertKey(key, value) {
     if (this.isFull()) {
       throw new Error("HashTable: table is full")
@@ -69,11 +78,13 @@ export class HashTable {
 
     const k = normalizeKey(key)
 
+    // Don’t allow duplicates
     const existing = this._findIndex(k)
     if (existing !== -1) {
       throw new Error("HashTable: duplicate key")
     }
 
+    // Find where to put it
     const insertIdx = this._findInsertIndex(k)
     if (insertIdx === -1) {
       throw new Error("HashTable: no free slot found (full)")
@@ -84,6 +95,7 @@ export class HashTable {
     return true
   }
 
+  // Remove key
   removeKey(key) {
     const idx = this._findIndex(key)
     if (idx === -1) {
@@ -104,6 +116,7 @@ export class HashTable {
     return this.insertKey(k, value)
   }
 
+  // Return all active keys
   keys() {
     const out = []
     for (const slot of this._arr) {
@@ -112,10 +125,12 @@ export class HashTable {
     return out
   }
 
+  // Find the array index for a key, or -1 if not found
   _findIndex(key) {
     const k = normalizeKey(key)
     let start = this.hashFunction(k)
 
+    // Linear probing
     for (let step = 0; step < this._cap; step++) {
       const idx = (start + step) % this._cap
       const slot = this._arr[idx]
@@ -129,6 +144,7 @@ export class HashTable {
     return -1
   }
 
+  // Find where a new key should be inserted
   _findInsertIndex(key) {
     const k = normalizeKey(key)
     let start = this.hashFunction(k)
@@ -141,6 +157,7 @@ export class HashTable {
       if (slot === null) {
         return firstTombstone !== -1 ? firstTombstone : idx
       }
+
       if (slot === TOMBSTONE) {
         if (firstTombstone === -1) firstTombstone = idx
         continue
@@ -155,13 +172,19 @@ export class HashSet {
   constructor(capacity = 257) {
     this._ht = new HashTable(capacity)
   }
+
   size() { return this._ht.size() }
   isEmpty() { return this._ht.isEmpty() }
   isFull() { return this._ht.isFull() }
+
+  // Check if key exists
   has(key) { return this._ht.hasKey(key) }
+
+  // Add key if it’s new
   add(key) {
     if (this.has(key)) return false
     return this._ht.insertKey(key, true)
   }
+
   remove(key) { return this._ht.removeKey(key) }
 }

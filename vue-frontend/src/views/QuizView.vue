@@ -23,6 +23,7 @@ const {
   restartQuiz,
 } = useWordbankQuiz()
 
+// Toast popup state
 const toastOpen = ref(false)
 const toastMsg = ref('')
 const toastType = ref('success')
@@ -36,6 +37,7 @@ function notify(message, type = 'success') {
   })
 }
 
+// Load a new quiz and show error toast if needed
 async function loadQuiz() {
   await fetchQuiz()
   if (error.value) {
@@ -43,6 +45,7 @@ async function loadQuiz() {
   }
 }
 
+// Next question or submit if it's the last one
 async function handleNext() {
   const res = await goNextOrSubmit()
   if (res?.submitted) {
@@ -54,6 +57,7 @@ async function handleNext() {
   }
 }
 
+// Restart quiz and handle errors
 async function handleRestart() {
   await restartQuiz()
   if (error.value) {
@@ -61,6 +65,7 @@ async function handleRestart() {
   }
 }
 
+// Load quiz when page opens
 onMounted(() => {
   loadQuiz()
 })
