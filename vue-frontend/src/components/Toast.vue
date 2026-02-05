@@ -1,6 +1,7 @@
 <script setup>
 import { onMounted, onBeforeUnmount, watch, ref } from 'vue'
 
+// This toast is a temporary notification that pops up at the bottom right corner for user feedback.
 const props = defineProps({
   open: { type: Boolean, default: false },
   message: { type: String, default: '' },

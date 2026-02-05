@@ -61,11 +61,13 @@ async function onSubmit() {
   }
 
   loading.value = true
-
+  
+  // Redirect after login/register
   const next = route.query.next || '/dashboard'
 
   try {
     let result
+    // Pick correct API call based on mode
     if (props.mode === 'sign-in') {
       result = await login({
         name: form.username.trim(),
@@ -81,6 +83,7 @@ async function onSubmit() {
       })
     }
 
+    // Show backend validation errors
     if (!result.ok) {
       if (result.fieldErrors) {
         if (result.fieldErrors.username) errors.username = result.fieldErrors.username

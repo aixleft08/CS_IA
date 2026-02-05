@@ -7,6 +7,7 @@ const q = ref('')
 let t = null
 const DEBOUNCE_MS = 350
 
+// Enter this button to submit the search
 function submit() {
   emit('submit', q.value.trim())
 }
@@ -21,12 +22,13 @@ watch(q, (val) => {
 
   clearTimeout(t)
 
+  // Empty input -> clear search results
   if (!term) {
     emit('submit', '')
     return
   }
 
-  // ✅ Otherwise, debounce the search
+  // Otherwise, debounce the search
   t = setTimeout(() => {
     emit('submit', term)
   }, DEBOUNCE_MS)

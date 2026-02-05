@@ -8,6 +8,7 @@ const props = defineProps({
 
 const emit = defineEmits(['restart'])
 
+// Build a quick lookup table: questionId -> Chinese text
 const zhById = computed(() => {
   const map = {}
   for (const q of props.questions) {
@@ -18,6 +19,7 @@ const zhById = computed(() => {
   return map
 })
 
+// Helper to get Chinese text for a result row
 function getZh(id) {
   return zhById.value[id] || ''
 }

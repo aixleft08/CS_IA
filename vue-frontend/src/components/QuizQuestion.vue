@@ -28,11 +28,13 @@ onMounted(() => {
   focusInput()
 })
 
+// Re-focus whenever the question changes
 watch(
   () => props.question && props.question.id,
   () => focusInput()
 )
 
+// Submit handler
 function onSubmit() {
   emit('next')
 }

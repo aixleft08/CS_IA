@@ -5,6 +5,7 @@ import { useAuth } from '@/composables/useAuth'
 const { isAuthenticated, signOut } = useAuth()
 const route = useRoute()
 
+// Highlights the current tab
 function isActive(path) {
   return route.path === path || route.path.startsWith(path + '/')
 }
